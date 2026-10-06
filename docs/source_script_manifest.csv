@@ -1,17 +1,17 @@
 script,source_label,purpose
-01_trem2_terminal_volcano_overlay.R,Trem2 terminal experiment curated analysis,Trem2/LSD1 terminal differential-expression volcano plots with immune-module overlay.
-02_trem2_terminal_microglia_immune_heatmap.R,Trem2 terminal experiment curated analysis,Trem2/LSD1 terminal microglia and immune-module heatmap from featureCounts matrices.
-03_trem2_terminal_reactive_astrocyte_heatmap.R,Trem2 terminal experiment curated analysis,Trem2/LSD1 terminal reactive-astrocyte marker heatmap.
-04_trem2_terminal_up_enrichment.R,Trem2 terminal experiment curated analysis,Trem2/LSD1 terminal enrichment analysis for UP-regulated gene lists.
-05_trem2_terminal_down_enrichment.R,Trem2 terminal experiment curated analysis,Trem2/LSD1 terminal enrichment analysis for DOWN-regulated gene lists.
-06_trem2_terminal_dam_overlap.R,Trem2 terminal experiment curated analysis,Overlap analysis between Trem2/LSD1 differential-expression gene lists and DAM-associated genes.
-07_plx_terminal_combined_volcano_overlay.R,PLX terminal experiment curated analysis,PLX terminal combined-sex differential-expression volcano plots with immune-module overlay.
-08_plx_terminal_microglia_immune_heatmap_by_sex.R,PLX terminal experiment curated analysis,PLX terminal sex-stratified microglia and immune-response heatmap using Trem2 gene order.
-09_plx_terminal_reactive_astrocyte_heatmap_by_sex.R,PLX terminal experiment curated analysis,PLX terminal sex-stratified reactive-astrocyte heatmap.
-10_plx_terminal_combined_enrichment.R,PLX terminal experiment curated analysis,PLX terminal combined-sex enrichment analysis for UP/DOWN gene lists.
-11_lsd1_timecourse_corrected_terminal_volcano_no_michael.R,timepoint_lsd1 corrected no-Michael curated analysis,Corrected LSD1 time-course DESeq2 volcano workflow excluding Michael terminal samples.
-12_lsd1_timecourse_corrected_terminal_enrichment_no_michael.R,timepoint_lsd1 corrected no-Michael curated analysis,Corrected LSD1 time-course enrichment analysis from no-Michael volcano outputs.
-13_lsd1_timecourse_corrected_terminal_immune_heatmap_no_michael.R,timepoint_lsd1 corrected no-Michael curated analysis,Corrected LSD1 time-course immune heatmap excluding Michael terminal samples.
-14_lsd1_timecourse_corrected_terminal_reactive_astrocyte_heatmap_no_michael.R,timepoint_lsd1 corrected no-Michael curated analysis,Corrected LSD1 time-course reactive-astrocyte heatmap excluding Michael terminal samples.
-15_lsd1_timecourse_early_terminal_overlap_no_michael.R,timepoint_lsd1 corrected no-Michael curated analysis,Corrected early-onset versus terminal overlap analysis excluding Michael terminal samples.
-16_lsd1_timecourse_dam_overlap_no_michael.R,timepoint_lsd1 corrected no-Michael curated analysis,Corrected overlap analysis between LSD1 time-course gene lists and DAM-associated genes.
+"01_lsd1_timecourse_terminal_volcano.R","LSD1 time-course curated analysis","LSD1 time-course DESeq2 volcano workflow using integrated terminal-stage datasets."
+"02_lsd1_timecourse_terminal_immune_heatmap.R","LSD1 time-course curated analysis","LSD1 time-course immune heatmap using integrated terminal-stage datasets."
+"03_lsd1_timecourse_terminal_reactive_astrocyte_heatmap.R","LSD1 time-course curated analysis","LSD1 time-course reactive-astrocyte heatmap using integrated terminal-stage datasets."
+"04_lsd1_timecourse_terminal_enrichment.R","LSD1 time-course curated analysis","LSD1 time-course enrichment analysis from integrated terminal-stage volcano outputs."
+"05_lsd1_timecourse_early_terminal_overlap.R","LSD1 time-course curated analysis","LSD1 time-course early-onset versus terminal overlap analysis using integrated terminal-stage datasets."
+"06_lsd1_timecourse_dam_overlap.R","LSD1 time-course curated analysis","LSD1 time-course overlap analysis between LSD1 time-course gene lists and DAM-associated genes."
+"07_trem2_terminal_volcano_overlay.R","Trem2 terminal analysis","Trem2/LSD1 terminal differential-expression volcano plots with immune-module overlay."
+"08_trem2_terminal_microglia_immune_heatmap.R","Trem2 terminal analysis","Trem2/LSD1 terminal microglia and immune-module heatmap from featureCounts matrices."
+"09_trem2_terminal_reactive_astrocyte_heatmap.R","Trem2 terminal analysis","Trem2/LSD1 terminal reactive-astrocyte marker heatmap."
+"10_trem2_terminal_up_enrichment.R","Trem2 terminal analysis","Trem2/LSD1 terminal enrichment analysis for UP-regulated gene lists."
+"11_trem2_terminal_down_enrichment.R","Trem2 terminal analysis","Trem2/LSD1 terminal enrichment analysis for DOWN-regulated gene lists."
+"12_trem2_terminal_dam_overlap.R","Trem2 terminal analysis","Overlap analysis between Trem2/LSD1 differential-expression gene lists and DAM-associated genes."
+"13_plx_terminal_combined_volcano_overlay.R","PLX terminal analysis","PLX terminal combined-sex differential-expression volcano plots with immune-module overlay."
+"14_plx_terminal_microglia_immune_heatmap_by_sex.R","PLX terminal analysis","PLX terminal sex-stratified microglia and immune-response heatmap using Trem2 gene order."
+"15_plx_terminal_reactive_astrocyte_heatmap_by_sex.R","PLX terminal analysis","PLX terminal sex-stratified reactive-astrocyte heatmap."
+"16_plx_terminal_combined_enrichment.R","PLX terminal analysis","PLX terminal combined-sex enrichment analysis for UP/DOWN gene lists."

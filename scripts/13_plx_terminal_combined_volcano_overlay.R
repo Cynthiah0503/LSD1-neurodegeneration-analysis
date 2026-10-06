@@ -1,10 +1,10 @@
-# 07_plx_terminal_combined_volcano_overlay.R
+# 13_plx_terminal_combined_volcano_overlay.R
 #
 # Purpose: PLX terminal combined-sex differential-expression volcano plots with immune-module overlay.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
 # Outputs are written under results/ or script-defined subfolders.
 
-# PLX terminal experiment volcano plots
+# PLX terminal volcano plots
 # Combined male + female version
 # PDF only
 # 2 pages in one PDF:
@@ -33,6 +33,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "plx_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 library(dplyr)
 library(tidyr)
 library(readxl)
@@ -40,12 +44,12 @@ library(ggplot2)
 library(ggrepel)
 library(patchwork)
 
-base_dir <- file.path(repo_root, "data", "processed", "PLX terminal experiment/results")
+base_dir <- file.path(repo_root, "data", "processed", "results")
 combined_dir <- file.path(base_dir, "volcano combined male and female")
 
 # Module annotation files
 # These are the same module files used in the previous volcano-plot logic.
-module_dir <- "./PLX RNA sequencing"
+module_dir <- data_external_dir
 allc_file  <- file.path(module_dir, "NIHMS472534-supplement-02.csv")
 mod_file   <- file.path(module_dir, "modules.csv")
 

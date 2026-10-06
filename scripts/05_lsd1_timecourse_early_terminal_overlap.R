@@ -1,6 +1,6 @@
-# 15_lsd1_timecourse_early_terminal_overlap_no_michael.R
+# 05_lsd1_timecourse_early_terminal_overlap.R
 #
-# Purpose: Corrected early-onset versus terminal overlap analysis excluding Michael terminal samples.
+# Purpose: LSD1 time-course early-onset versus terminal overlap analysis using integrated terminal-stage datasets.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
 # Outputs are written under results/ or script-defined subfolders.
 
@@ -20,6 +20,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "lsd1_timecourse")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 library(dplyr)
 library(VennDiagram)
 library(grid)
@@ -35,18 +39,18 @@ arrange <- dplyr::arrange
 excluded_genes <- c("ESR1")
 
 # File paths
-input_dir <- "./timepoint_lsd1/正确combine terminal/CORRECTED_volcano_LSD1terminal_plus_Trem2WTterminal_no_Michael_GALAXY_style_FC"
-output_dir <- file.path(input_dir, "VENN_Early_onset_vs_Terminal_CORRECTED_COMBINE_terminal_NO_ESR1")
+input_dir <- file.path(results_dir, "terminal_volcano")
+output_dir <- file.path(input_dir, "VENN_Early_onset_vs_Terminal_LSD1_TIMECOURSE_terminal_NO_ESR1")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 # 1) Input files
 # UP genes files
-up_early_file    <- file.path(input_dir, "UP_genes_Early_onset_CORRECTED_COMBINE_terminal.csv")
-up_terminal_file <- file.path(input_dir, "UP_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv")
+up_early_file    <- file.path(input_dir, "UP_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv")
+up_terminal_file <- file.path(input_dir, "UP_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv")
 
 # 原始 full DEG files（直接用它们做 universe，不再依赖 CLEANED 文件）
 full_early_file    <- file.path(input_dir, "Early_onset_GALAXY_STYLE_DESeq2_KO_vs_WT.csv")
-full_terminal_file <- file.path(input_dir, "Terminal_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL_GALAXY_STYLE_DESeq2_KO_vs_WT.csv")
+full_terminal_file <- file.path(input_dir, "Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED_GALAXY_STYLE_DESeq2_KO_vs_WT.csv")
 
 read_any_table <- function(path) {
   if (grepl("\\.xlsx$", path, ignore.case = TRUE)) {
@@ -260,11 +264,11 @@ venn_plot <- venn.diagram(
   main.cex = 1.5
 )
 
-pdf(file.path(output_dir, "VENN_UP_Early_onset_vs_Terminal_CORRECTED_COMBINE_terminal.pdf"), width = 8.5, height = 8.5)
+pdf(file.path(output_dir, "VENN_UP_Early_onset_vs_Terminal_LSD1_TIMECOURSE_terminal.pdf"), width = 8.5, height = 8.5)
 grid.newpage()
 grid.draw(venn_plot)
 
-# 手动把两个组名放到你红线的位置（圈外、同一水平线）
+# Position group labels outside the Venn circles for consistent figure layout.
 grid.text(
   "Terminal",
   x = 0.12, y = 0.57,
@@ -295,7 +299,7 @@ grid.text(
 
 dev.off()
 
-sink(file.path(output_dir, "SUMMARY_UP_Early_onset_vs_Terminal_CORRECTED_COMBINE_terminal.txt"))
+sink(file.path(output_dir, "SUMMARY_UP_Early_onset_vs_Terminal_LSD1_TIMECOURSE_terminal.txt"))
 cat("Comparison: Early onset vs Terminal (UP genes)\n\n")
 cat("Upregulated genes in Early onset:", m, "\n")
 cat("Upregulated genes in Terminal:", k, "\n")
@@ -329,12 +333,12 @@ excluded_genes <- c("ESR1")
 
 # 1) Input files
 # DOWN genes files
-down_early_file    <- file.path(input_dir, "DOWN_genes_Early_onset_CORRECTED_COMBINE_terminal.csv")
-down_terminal_file <- file.path(input_dir, "DOWN_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv")
+down_early_file    <- file.path(input_dir, "DOWN_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv")
+down_terminal_file <- file.path(input_dir, "DOWN_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv")
 
 # 原始 full DEG files（直接用它们做 universe，不依赖 CLEANED 文件）
 full_early_file    <- file.path(input_dir, "Early_onset_GALAXY_STYLE_DESeq2_KO_vs_WT.csv")
-full_terminal_file <- file.path(input_dir, "Terminal_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL_GALAXY_STYLE_DESeq2_KO_vs_WT.csv")
+full_terminal_file <- file.path(input_dir, "Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED_GALAXY_STYLE_DESeq2_KO_vs_WT.csv")
 
 read_any_table <- function(path) {
   if (grepl("\\.xlsx$", path, ignore.case = TRUE)) {
@@ -551,7 +555,7 @@ venn_plot <- venn.diagram(
   main.cex = 1.5
 )
 
-pdf(file.path(output_dir, "VENN_DOWN_Early_onset_vs_Terminal_CORRECTED_COMBINE_terminal.pdf"), width = 8.5, height = 8.5)
+pdf(file.path(output_dir, "VENN_DOWN_Early_onset_vs_Terminal_LSD1_TIMECOURSE_terminal.pdf"), width = 8.5, height = 8.5)
 grid.newpage()
 grid.draw(venn_plot)
 
@@ -586,7 +590,7 @@ grid.text(
 
 dev.off()
 
-sink(file.path(output_dir, "SUMMARY_DOWN_Early_onset_vs_Terminal_CORRECTED_COMBINE_terminal.txt"))
+sink(file.path(output_dir, "SUMMARY_DOWN_Early_onset_vs_Terminal_LSD1_TIMECOURSE_terminal.txt"))
 cat("Comparison: Early onset vs Terminal (DOWN genes)\n\n")
 cat("Downregulated genes in Early onset:", m, "\n")
 cat("Downregulated genes in Terminal:", k, "\n")

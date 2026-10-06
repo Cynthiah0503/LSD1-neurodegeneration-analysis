@@ -1,4 +1,4 @@
-# 09_plx_terminal_reactive_astrocyte_heatmap_by_sex.R
+# 15_plx_terminal_reactive_astrocyte_heatmap_by_sex.R
 #
 # Purpose: PLX terminal sex-stratified reactive-astrocyte heatmap.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
@@ -36,6 +36,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "plx_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(ComplexHeatmap)
   library(dplyr)
@@ -46,7 +50,7 @@ suppressPackageStartupMessages({
   library(readr)
 })
 
-base_dir <- file.path(repo_root, "data", "processed", "PLX terminal experiment/results")
+base_dir <- file.path(repo_root, "data", "processed", "results")
 featurecounts_dir <- file.path(base_dir, "featurecounts")
 genotype_file <- file.path(base_dir, "genotypes.xlsx")
 

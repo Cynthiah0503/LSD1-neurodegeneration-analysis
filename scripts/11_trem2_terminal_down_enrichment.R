@@ -1,4 +1,4 @@
-# 05_trem2_terminal_down_enrichment.R
+# 11_trem2_terminal_down_enrichment.R
 #
 # Purpose: Trem2/LSD1 terminal enrichment analysis for DOWN-regulated gene lists.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
@@ -30,6 +30,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "trem2_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 library(clusterProfiler)
 library(org.Mm.eg.db)
 library(ReactomePA)
@@ -57,7 +61,7 @@ files <- list(
     "DOWN_genes_Trem2KO_LSD1KO_vs_Trem2WT_LSD1WT.csv"
 )
 
-cell_marker_file <- "Cell_marker_Mouse.xlsx"
+cell_marker_file <- file.path(data_external_dir, "Cell_marker_Mouse.xlsx")
 
 clean_genes <- function(x) {
   x <- as.character(x)

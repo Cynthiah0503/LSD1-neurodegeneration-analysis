@@ -1,4 +1,4 @@
-# 08_plx_terminal_microglia_immune_heatmap_by_sex.R
+# 14_plx_terminal_microglia_immune_heatmap_by_sex.R
 #
 # Purpose: PLX terminal sex-stratified microglia and immune-response heatmap using Trem2 gene order.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
@@ -44,6 +44,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "plx_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(ComplexHeatmap)
   library(dplyr)
@@ -56,20 +60,20 @@ suppressPackageStartupMessages({
 
 katz_root <- repo_root
 
-project_dir <- file.path(katz_root, "PLX terminal experiment/results")
+project_dir <- file.path(katz_root, "results")
 featurecounts_dir <- file.path(project_dir, "featurecounts")
 genotype_file <- file.path(project_dir, "genotypes.xlsx")
 
 # Use the same immune-module annotation files used in previous heatmap workflows.
 # These paths were present in the file inventory.
-allc_file <- file.path(katz_root, "PLX RNA sequencing/NIHMS472534-supplement-02.csv")
-mod_file  <- file.path(katz_root, "PLX RNA sequencing/modules.csv")
+allc_file <- file.path(katz_root, "NIHMS472534-supplement-02.csv")
+mod_file  <- file.path(katz_root, "modules.csv")
 
 # Exact row order exported from the Trem2 immune heatmap script.
 # This is the file that makes PLX use the SAME gene order as Trem2.
 trem2_gene_order_file <- file.path(
   katz_root,
-  "Trem2 terminal experiment/ALL_HEATMAP_GENE_ORDER_with_LeftCleanRowIndex.csv"
+  "ALL_HEATMAP_GENE_ORDER_with_LeftCleanRowIndex.csv"
 )
 
 out_dir <- file.path(project_dir, "heatmap_microglia_immune_response_by_sex_Trem2_gene_order_SIDE_BY_SIDE_WITHIN_SEX_NORMALIZED")

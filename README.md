@@ -10,22 +10,22 @@ The goal of this repository is computational transparency for the downstream ana
 LSD1_neurodegeneration_analysis/
 ├── README.md
 ├── scripts/
-│   ├── 01_trem2_terminal_volcano_overlay.R
-│   ├── 02_trem2_terminal_microglia_immune_heatmap.R
-│   ├── 03_trem2_terminal_reactive_astrocyte_heatmap.R
-│   ├── 04_trem2_terminal_up_enrichment.R
-│   ├── 05_trem2_terminal_down_enrichment.R
-│   ├── 06_trem2_terminal_dam_overlap.R
-│   ├── 07_plx_terminal_combined_volcano_overlay.R
-│   ├── 08_plx_terminal_microglia_immune_heatmap_by_sex.R
-│   ├── 09_plx_terminal_reactive_astrocyte_heatmap_by_sex.R
-│   ├── 10_plx_terminal_combined_enrichment.R
-│   ├── 11_lsd1_timecourse_corrected_terminal_volcano_no_michael.R
-│   ├── 12_lsd1_timecourse_corrected_terminal_enrichment_no_michael.R
-│   ├── 13_lsd1_timecourse_corrected_terminal_immune_heatmap_no_michael.R
-│   ├── 14_lsd1_timecourse_corrected_terminal_reactive_astrocyte_heatmap_no_michael.R
-│   ├── 15_lsd1_timecourse_early_terminal_overlap_no_michael.R
-│   └── 16_lsd1_timecourse_dam_overlap_no_michael.R
+│   ├── 01_lsd1_timecourse_terminal_volcano.R
+│   ├── 02_lsd1_timecourse_terminal_immune_heatmap.R
+│   ├── 03_lsd1_timecourse_terminal_reactive_astrocyte_heatmap.R
+│   ├── 04_lsd1_timecourse_terminal_enrichment.R
+│   ├── 05_lsd1_timecourse_early_terminal_overlap.R
+│   ├── 06_lsd1_timecourse_dam_overlap.R
+│   ├── 07_trem2_terminal_volcano_overlay.R
+│   ├── 08_trem2_terminal_microglia_immune_heatmap.R
+│   ├── 09_trem2_terminal_reactive_astrocyte_heatmap.R
+│   ├── 10_trem2_terminal_up_enrichment.R
+│   ├── 11_trem2_terminal_down_enrichment.R
+│   ├── 12_trem2_terminal_dam_overlap.R
+│   ├── 13_plx_terminal_combined_volcano_overlay.R
+│   ├── 14_plx_terminal_microglia_immune_heatmap_by_sex.R
+│   ├── 15_plx_terminal_reactive_astrocyte_heatmap_by_sex.R
+│   └── 16_plx_terminal_combined_enrichment.R
 ├── data/
 │   ├── README.md
 │   ├── processed/
@@ -37,28 +37,28 @@ LSD1_neurodegeneration_analysis/
 
 ## Analysis scope
 
-The curated scripts cover three connected downstream analysis modules:
+The curated scripts follow the analysis order used in the project narrative:
 
-1. **Trem2 terminal experiment**
-   - Differential-expression volcano plots
+1. **LSD1 time-course analysis**
+   - Terminal-stage volcano workflow across disease-stage datasets
+   - Immune-response heatmaps across 3 weeks, 4 weeks, early-onset, and terminal stages
+   - Reactive-astrocyte heatmaps across disease stages
+   - Enrichment analysis from time-course gene lists
+   - Early-onset versus terminal overlap analysis
+   - DAM overlap across time points
+
+2. **Trem2 terminal analysis**
+   - Terminal-stage differential-expression volcano plots
    - Microglia/immune-response heatmaps
    - Reactive-astrocyte heatmaps
    - UP/DOWN gene-list enrichment
    - DAM gene-list overlap analysis
 
-2. **PLX terminal experiment**
+3. **PLX terminal analysis**
    - Combined-sex volcano plots
    - Sex-stratified immune heatmaps
    - Sex-stratified reactive-astrocyte heatmaps
    - UP/DOWN gene-list enrichment
-
-3. **Corrected LSD1 time-course analysis**
-   - Corrected terminal-stage comparison excluding Michael terminal samples
-   - DESeq2-based volcano workflow
-   - Enrichment analysis
-   - Immune and reactive-astrocyte heatmaps
-   - Early-onset versus terminal overlap
-   - DAM overlap across time points
 
 ## Reproducibility boundary
 
@@ -82,7 +82,7 @@ Each script is designed to be run from the repository root or by `Rscript` using
 Example:
 
 ```bash
-Rscript scripts/11_lsd1_timecourse_corrected_terminal_volcano_no_michael.R
+Rscript scripts/01_lsd1_timecourse_terminal_volcano.R
 ```
 
 Before running a script, place the required processed input files into `data/processed/` or `data/external/` following the notes in `data/README.md`. Outputs should be written to `results/` or to script-defined analysis subfolders.

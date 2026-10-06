@@ -1,4 +1,4 @@
-# 02_trem2_terminal_microglia_immune_heatmap.R
+# 08_trem2_terminal_microglia_immune_heatmap.R
 #
 # Purpose: Trem2/LSD1 terminal microglia and immune-module heatmap from featureCounts matrices.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
@@ -46,16 +46,20 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "trem2_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 library(ComplexHeatmap)
 library(dplyr)
 library(grid)
 library(readxl)
 library(circlize)
 
-trem22 <- readxl::read_excel("Trem2heatmap feature counts.xlsx", sheet = 1)
+trem22 <- readxl::read_excel(file.path(data_processed_dir, "Trem2heatmap feature counts.xlsx"), sheet = 1)
 
-allc <- read.csv("NIHMS472534-supplement-02.csv", header = TRUE, check.names = FALSE)
-mod  <- read.csv("modules.csv", header = TRUE, check.names = FALSE)
+allc <- read.csv(file.path(data_external_dir, "NIHMS472534-supplement-02.csv"), header = TRUE, check.names = FALSE)
+mod  <- read.csv(file.path(data_external_dir, "modules.csv"), header = TRUE, check.names = FALSE)
 
 # 修复 modules.csv 里 NA/空列名
 names(mod) <- sub("^\\ufeff", "", names(mod))

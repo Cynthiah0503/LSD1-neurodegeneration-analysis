@@ -1,4 +1,4 @@
-# 06_trem2_terminal_dam_overlap.R
+# 12_trem2_terminal_dam_overlap.R
 #
 # Purpose: Overlap analysis between Trem2/LSD1 differential-expression gene lists and DAM-associated genes.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
@@ -22,6 +22,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "trem2_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 library(readr)
 library(readxl)
 library(dplyr)
@@ -33,11 +37,11 @@ library(tibble)
 
 katz_dir <- repo_root
 
-trem2_dir <- file.path(katz_dir, "Trem2 terminal experiment")
+trem2_dir <- data_processed_dir
 
 dam_dir <- file.path(
   katz_dir,
-  "timepoint_lsd1/combine terminal/正确volcano enrichment：combine terminal batch aware"
+  "terminal_integration_reference"
 )
 
 dam_file <- file.path(dam_dir, "DAM.xlsx")

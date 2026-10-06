@@ -1,15 +1,15 @@
-# 12_lsd1_timecourse_corrected_terminal_enrichment_no_michael.R
+# 04_lsd1_timecourse_terminal_enrichment.R
 #
-# Purpose: Corrected LSD1 time-course enrichment analysis from no-Michael volcano outputs.
+# Purpose: LSD1 time-course enrichment analysis from integrated terminal-stage volcano outputs.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
 # Outputs are written under results/ or script-defined subfolders.
 
-# CORRECTED enrichment from corrected volcano output
+# Terminal-stage enrichment from terminal-stage volcano output
 # SINGLE multi-page PDF version
 #
 # Input:
-#   Corrected volcano output files created from:
-#   LSD1 terminal + Trem2WT-background terminal, NO Michael
+#   LSD1 time-course volcano output files created from:
+#   LSD1 terminal + Trem2WT-background terminal, terminal-stage
 #
 #   - Does NOT create many separate PDFs.
 #   - Creates ONE multi-page PDF containing:
@@ -43,6 +43,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "lsd1_timecourse")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(clusterProfiler)
   library(org.Mm.eg.db)
@@ -60,27 +64,23 @@ mutate  <- dplyr::mutate
 arrange <- dplyr::arrange
 
 katz_root <- repo_root
-project_dir <- file.path(katz_root, "timepoint_lsd1")
+project_dir <- data_processed_dir
 
-# Corrected volcano output folder from the corrected no-Michael volcano script.
-base_dir <- file.path(
-  project_dir,
-  "正确combine terminal",
-  "CORRECTED_volcano_LSD1terminal_plus_Trem2WTterminal_no_Michael_GALAXY_style_FC"
-)
+# LSD1 time-course volcano output folder from the terminal-stage volcano script.
+base_dir <- file.path(results_dir, "terminal_volcano")
 
 if (!dir.exists(base_dir)) {
   stop(
     "Input folder does not exist:\n",
     base_dir,
-    "\n\nRun the corrected volcano script first, or check the folder name."
+    "\n\nRun the LSD1 time-course volcano script first, or check the folder name."
   )
 }
 
 # Support files
-cellmarker_file <- file.path(project_dir, "Cell_marker_Mouse.xlsx")
-allc_file       <- file.path(project_dir, "NIHMS472534-supplement-02.csv")
-mod_file        <- file.path(project_dir, "modules.csv")
+cellmarker_file <- file.path(data_external_dir, "Cell_marker_Mouse.xlsx")
+allc_file <- file.path(data_external_dir, "NIHMS472534-supplement-02.csv")
+mod_file <- file.path(data_external_dir, "modules.csv")
 
 required_support_files <- c(cellmarker_file, allc_file, mod_file)
 missing_support_files <- required_support_files[!file.exists(required_support_files)]
@@ -90,12 +90,12 @@ if (length(missing_support_files) > 0) {
 }
 
 # One output folder, one output PDF.
-out_dir <- file.path(base_dir, "enrichment_SINGLE_PDF_CORRECTED_GALAXY_STYLE_FC")
+out_dir <- file.path(results_dir, "terminal_enrichment")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 single_pdf <- file.path(
   out_dir,
-  "CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL_enrichment_UP_DOWN_SINGLE_MULTIPAGE.pdf"
+  "LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED_enrichment_UP_DOWN_SINGLE_MULTIPAGE.pdf"
 )
 
 # 1) Mouse symbol normalization
@@ -241,7 +241,7 @@ make_pathway_heatmap <- function(enrich_df,
     ) +
     labs(
       title = paste0(direction_label, " genes: ", analysis_name, " pathway enrichment"),
-      subtitle = "Corrected combined terminal = LSD1 terminal + Trem2WT-background terminal; no Michael",
+      subtitle = "LSD1 time-course combined terminal = LSD1 terminal + Trem2WT-background terminal; terminal-stage",
       x = "Time point",
       y = "Pathway"
     ) +
@@ -342,20 +342,20 @@ cellmarker_term2gene <- cellmarker %>%
 # 5) Input files
 get_input_files <- function(direction_label) {
   list(
-    `3weeks` = file.path(base_dir, paste0(direction_label, "_genes_3weeks_CORRECTED_NO_MICHAEL.csv")),
-    `4weeks` = file.path(base_dir, paste0(direction_label, "_genes_4weeks_CORRECTED_NO_MICHAEL.csv")),
-    `Early_onset` = file.path(base_dir, paste0(direction_label, "_genes_Early_onset_CORRECTED_NO_MICHAEL.csv")),
-    `Terminal` = file.path(base_dir, paste0(direction_label, "_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv"))
+    `3weeks` = file.path(base_dir, paste0(direction_label, "_genes_3weeks_TERMINAL_INTEGRATED.csv")),
+    `4weeks` = file.path(base_dir, paste0(direction_label, "_genes_4weeks_TERMINAL_INTEGRATED.csv")),
+    `Early_onset` = file.path(base_dir, paste0(direction_label, "_genes_Early_onset_TERMINAL_INTEGRATED.csv")),
+    `Terminal` = file.path(base_dir, paste0(direction_label, "_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv"))
   )
 }
 
-# More permissive fallback in case file names differ slightly from the corrected volcano script.
+# More permissive fallback in case file names differ slightly from the terminal-stage volcano script.
 find_input_file_fallback <- function(direction_label, timepoint_key) {
   pattern_map <- list(
     `3weeks` = paste0("^", direction_label, "_genes_3.*\\.csv$"),
     `4weeks` = paste0("^", direction_label, "_genes_4.*\\.csv$"),
     `Early_onset` = paste0("^", direction_label, "_genes_Early.*\\.csv$"),
-    `Terminal` = paste0("^", direction_label, "_genes_Terminal.*NO_MICHAEL.*\\.csv$")
+    `Terminal` = paste0("^", direction_label, "_genes_Terminal.*TERMINAL_INTEGRATED.*\\.csv$")
   )
 
   files <- list.files(base_dir, pattern = pattern_map[[timepoint_key]], full.names = TRUE, ignore.case = TRUE)
@@ -454,7 +454,7 @@ run_enrichment_for_direction <- function(direction = c("UP", "DOWN")) {
 
     write.csv(
       gene_df,
-      file.path(out_dir, paste0("SYMBOL_to_ENTREZ_", nm, "_", direction_label, "_CORRECTED.csv")),
+      file.path(out_dir, paste0("SYMBOL_to_ENTREZ_", nm, "_", direction_label, "_TERMINAL_INTEGRATED.csv")),
       row.names = FALSE
     )
   }
@@ -463,7 +463,7 @@ run_enrichment_for_direction <- function(direction = c("UP", "DOWN")) {
 
   write.csv(
     gene_count_df,
-    file.path(out_dir, paste0("CHECK_gene_counts_", direction_label, "_CORRECTED_GALAXY_STYLE_FC.csv")),
+    file.path(out_dir, paste0("CHECK_gene_counts_", direction_label, "_TERMINAL_INTEGRATED_GALAXY_STYLE_FC.csv")),
     row.names = FALSE
   )
 
@@ -490,7 +490,7 @@ run_enrichment_for_direction <- function(direction = c("UP", "DOWN")) {
 
   write.csv(
     cellmarker_df,
-    file.path(out_dir, paste0("COMPARE_CELL_MARKER_", direction_label, "_TIMEPOINTS_CORRECTED.csv")),
+    file.path(out_dir, paste0("COMPARE_CELL_MARKER_", direction_label, "_TIMEPOINTS_TERMINAL_INTEGRATED.csv")),
     row.names = FALSE
   )
 
@@ -524,7 +524,7 @@ run_enrichment_for_direction <- function(direction = c("UP", "DOWN")) {
 
   write.csv(
     go_df,
-    file.path(out_dir, paste0("COMPARE_GO_BP_", direction_label, "_TIMEPOINTS_CORRECTED.csv")),
+    file.path(out_dir, paste0("COMPARE_GO_BP_", direction_label, "_TIMEPOINTS_TERMINAL_INTEGRATED.csv")),
     row.names = FALSE
   )
 
@@ -553,7 +553,7 @@ run_enrichment_for_direction <- function(direction = c("UP", "DOWN")) {
 
   write.csv(
     kegg_df,
-    file.path(out_dir, paste0("COMPARE_KEGG_", direction_label, "_TIMEPOINTS_CORRECTED.csv")),
+    file.path(out_dir, paste0("COMPARE_KEGG_", direction_label, "_TIMEPOINTS_TERMINAL_INTEGRATED.csv")),
     row.names = FALSE
   )
 
@@ -583,7 +583,7 @@ run_enrichment_for_direction <- function(direction = c("UP", "DOWN")) {
 
   write.csv(
     reactome_df,
-    file.path(out_dir, paste0("COMPARE_REACTOME_", direction_label, "_TIMEPOINTS_CORRECTED.csv")),
+    file.path(out_dir, paste0("COMPARE_REACTOME_", direction_label, "_TIMEPOINTS_TERMINAL_INTEGRATED.csv")),
     row.names = FALSE
   )
 

@@ -1,10 +1,10 @@
-# 11_lsd1_timecourse_corrected_terminal_volcano_no_michael.R
+# 01_lsd1_timecourse_terminal_volcano.R
 #
-# Purpose: Corrected LSD1 time-course DESeq2 volcano workflow excluding Michael terminal samples.
+# Purpose: LSD1 time-course DESeq2 volcano workflow using integrated terminal-stage datasets.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
 # Outputs are written under results/ or script-defined subfolders.
 
-# CORRECTED GALAXY-STYLE FC COMBINE TERMINAL VOLCANO
+# LSD1 TIME-COURSE TERMINAL VOLCANO
 #
 #   Same volcano logic as the older combine-terminal script:
 #     3 weeks KO vs WT
@@ -12,17 +12,17 @@
 #     Early onset KO vs WT
 #     Terminal KO vs WT
 #
-#   Corrected terminal = timepoint_lsd1 Terminal + Trem2WT-background terminal
+#   LSD1 time-course terminal-stage integration combines the terminal LSD1 cohort with Trem2WT-background terminal samples
 #
-# Corrected Terminal source:
-#   1) timepoint_lsd1/Terminal feature counts.xlsx
-#   2) Trem2 terminal experiment/Trem2heatmap feature counts.xlsx
+# LSD1 time-course Terminal source:
+#   1) Terminal feature counts.xlsx
+#   2) Trem2heatmap feature counts.xlsx
 #      KEEP ONLY:
 #        LSD1WT_Trem2WW  = LSD1WT_Trem2WT control
 #        LSD1KO_Trem2WW  = LSD1KO_Trem2WT experiment
 #      EXCLUDE:
 #        Trem2MM / Trem2KO background
-#        Michael completely
+#        legacy terminal dataset
 #
 # Direction:
 #   log2FC = LSD1KO / LSD1WT
@@ -40,7 +40,7 @@
 #   Terminal    -> ~ Dataset + Genotype
 #
 # Output folder:
-#     CORRECTED_volcano_LSD1terminal_plus_Trem2WTterminal_no_Michael_GALAXY_style_FC/
+#     LSD1_timecourse_volcano_LSD1terminal_plus_Trem2WTterminal_terminal_integrated_GALAXY_style_FC/
 
 
 # Resolve paths relative to the repository root when the script is run with Rscript.
@@ -53,6 +53,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "lsd1_timecourse")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(dplyr)
   library(ggplot2)
@@ -70,14 +74,14 @@ arrange <- dplyr::arrange
 
 katz_dir <- repo_root
 
-base_dir <- file.path(katz_dir, "timepoint_lsd1")
-trem2_dir <- file.path(katz_dir, "Trem2 terminal experiment")
+base_dir <- data_processed_dir
+trem2_dir <- data_processed_dir
 
-corrected_root <- file.path(base_dir, "正确combine terminal")
+terminal_stage_root <- results_dir
 
 out_dir <- file.path(
-  corrected_root,
-  "CORRECTED_volcano_LSD1terminal_plus_Trem2WTterminal_no_Michael_GALAXY_style_FC"
+  terminal_stage_root,
+  "terminal_volcano"
 )
 
 if (!dir.exists(out_dir)) {
@@ -93,8 +97,8 @@ term_file  <- file.path(base_dir, "Terminal feature counts.xlsx")
 # Correct Trem2 terminal raw matrix
 trem2_heatmap_file <- file.path(trem2_dir, "Trem2heatmap feature counts.xlsx")
 
-# Michael exists but must never be read
-mich_file_that_must_not_be_used <- file.path(base_dir, "featurecountsLSD1del vs. LSD1wt .xlsx")
+# legacy terminal dataset exists but is not used in this terminal-stage integration
+excluded_terminal_batch_file <- file.path(base_dir, "featurecountsLSD1del vs. LSD1wt .xlsx")
 
 # Module annotation files
 allc_file <- file.path(base_dir, "NIHMS472534-supplement-02.csv")
@@ -121,8 +125,8 @@ if (length(missing_files) > 0) {
   stop("Missing required input files:\n", paste(missing_files, collapse = "\n"))
 }
 
-if (file.exists(mich_file_that_must_not_be_used)) {
-  message("Michael file exists on disk but will NOT be read: ", mich_file_that_must_not_be_used)
+if (file.exists(excluded_terminal_batch_file)) {
+  message("Legacy terminal-batch file exists on disk but will not be read: ", excluded_terminal_batch_file)
 }
 
 # 1) Helpers
@@ -330,7 +334,7 @@ prep_featurecounts_early <- function(df, dataset_label = "early_onset", timepoin
   list(mat = mat, sample_info = sample_info)
 }
 
-# 5) Prep corrected Trem2WT-background terminal samples
+# 5) Prep terminal-stage Trem2WT-background terminal samples
 prep_trem2wt_terminal <- function(df, dataset_label = "Trem2WT_terminal", timepoint_label = "Terminal") {
   gene_col <- pick_gene_symbol_col(df, "Trem2heatmap featureCounts")
   sample_cols_all <- grep("^LSD1", names(df), value = TRUE)
@@ -462,18 +466,18 @@ rownames(combined_sample_info) <- combined_sample_info$Sample
 combined_sample_info <- combined_sample_info[colnames(combined_counts), , drop = FALSE]
 
 # Hard safety block
-if (any(grepl("mich|michael", combined_sample_info$Sample, ignore.case = TRUE)) ||
-    any(grepl("mich|michael", combined_sample_info$Dataset, ignore.case = TRUE))) {
-  stop("Michael/mich sample entered corrected volcano workflow. Stop.")
+if (any(grepl("legacy_terminal", combined_sample_info$Sample, ignore.case = TRUE)) ||
+    any(grepl("legacy_terminal", combined_sample_info$Dataset, ignore.case = TRUE))) {
+  stop("legacy terminal-batch sample entered terminal-stage volcano workflow. Stop.")
 }
 
 write.csv(
   combined_counts,
-  file.path(out_dir, "CORRECTED_input_raw_featureCounts_gene_union_NO_MICHAEL.csv")
+  file.path(out_dir, "TERMINAL_INTEGRATION_input_raw_featureCounts_gene_union_TERMINAL_INTEGRATED.csv")
 )
 write.csv(
   combined_sample_info,
-  file.path(out_dir, "CORRECTED_input_sample_info_NO_MICHAEL.csv"),
+  file.path(out_dir, "input_sample_info.csv"),
   row.names = FALSE
 )
 
@@ -607,7 +611,7 @@ term_combine <- run_deseq_for_timepoint(
   combined_counts,
   combined_sample_info,
   timepoint_label = "Terminal",
-  output_prefix = "Terminal_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL"
+  output_prefix = "Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED"
 )
 
 # 9) Label helper
@@ -713,7 +717,7 @@ p_early_combine <- make_volcano_combine(
 
 p_term_combine <- make_volcano_combine(
   term_combine,
-  title_text = "Terminal corrected: LSD1 terminal + Trem2WT terminal",
+  title_text = "Terminal terminal-stage: LSD1 terminal + Trem2WT terminal",
   xlab_text  = "log2FC",
   xlims = global_xlim_combine,
   ylims = global_ylim_combine
@@ -772,9 +776,9 @@ if (length(setA_yellow_combine) == 0) {
 
 setB_no_yellow_combine <- setdiff(all_genes_universe_combine, setA_yellow_combine)
 
-cat("\n[CORRECTED COMBINE TERMINAL] Microglial and immune genes:", length(setA_yellow_combine), "\n")
-cat("[CORRECTED COMBINE TERMINAL] Other genes:", length(setB_no_yellow_combine), "\n")
-cat("[CORRECTED COMBINE TERMINAL] Overlap check:", length(intersect(setA_yellow_combine, setB_no_yellow_combine)), "\n\n")
+cat("\n[LSD1 TIME-COURSE TERMINAL INTEGRATION] Microglial and immune genes:", length(setA_yellow_combine), "\n")
+cat("[LSD1 TIME-COURSE TERMINAL INTEGRATION] Other genes:", length(setB_no_yellow_combine), "\n")
+cat("[LSD1 TIME-COURSE TERMINAL INTEGRATION] Overlap check:", length(intersect(setA_yellow_combine, setB_no_yellow_combine)), "\n\n")
 
 filter_to_gene_set_combine <- function(df, gene_set) {
   df %>%
@@ -857,17 +861,17 @@ term_B_combine  <- filter_to_gene_set_combine(term_combine, setB_no_yellow_combi
 p_wk3_A_combine <- make_volcano_combine(wk3_A_combine, "3 weeks (ONLY Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
 p_wk4_A_combine <- make_volcano_combine(wk4_A_combine, "4 weeks (ONLY Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
 p_early_A_combine <- make_volcano_combine(early_A_combine, "Early onset (ONLY Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
-p_term_A_combine <- make_volcano_combine(term_A_combine, "Terminal corrected (ONLY Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
+p_term_A_combine <- make_volcano_combine(term_A_combine, "Terminal terminal-stage (ONLY Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
 
 p_wk3_B_combine <- make_volcano_combine(wk3_B_combine, "3 weeks (WITHOUT Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
 p_wk4_B_combine <- make_volcano_combine(wk4_B_combine, "4 weeks (WITHOUT Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
 p_early_B_combine <- make_volcano_combine(early_B_combine, "Early onset (WITHOUT Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
-p_term_B_combine <- make_volcano_combine(term_B_combine, "Terminal corrected (WITHOUT Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
+p_term_B_combine <- make_volcano_combine(term_B_combine, "Terminal terminal-stage (WITHOUT Microglial and immune genes)", "log2FC", global_xlim_combine, global_ylim_combine)
 
 p_wk3_overlay_combine <- make_volcano_overlay_yellow_combine(wk3_combine, "3 weeks", "log2FC", global_xlim_combine, global_ylim_combine, setA_yellow_combine)
 p_wk4_overlay_combine <- make_volcano_overlay_yellow_combine(wk4_combine, "4 weeks", "log2FC", global_xlim_combine, global_ylim_combine, setA_yellow_combine)
 p_early_overlay_combine <- make_volcano_overlay_yellow_combine(early_combine, "Early onset", "log2FC", global_xlim_combine, global_ylim_combine, setA_yellow_combine)
-p_term_overlay_combine <- make_volcano_overlay_yellow_combine(term_combine, "Terminal corrected", "log2FC", global_xlim_combine, global_ylim_combine, setA_yellow_combine)
+p_term_overlay_combine <- make_volcano_overlay_yellow_combine(term_combine, "Terminal terminal-stage", "log2FC", global_xlim_combine, global_ylim_combine, setA_yellow_combine)
 
 # 14) 4-panel layout
 one_page_4panel_combine <- function(p_wk3, p_wk4, p_early, p_term) {
@@ -886,7 +890,7 @@ one_page_4panel_combine <- function(p_wk3, p_wk4, p_early, p_term) {
 # 15) PDF output
 final_pdf_combine <- file.path(
   out_dir,
-  "VOLCANO_CORRECTED_combine_terminal_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL_GALAXY_STYLE_FC.pdf"
+  "VOLCANO_TERMINAL_INTEGRATED_combine_terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED_GALAXY_STYLE_FC.pdf"
 )
 
 pdf(final_pdf_combine, width = 23, height = 6.5, onefile = TRUE)
@@ -949,12 +953,12 @@ get_down_table_combine <- function(df, timepoint_name) {
 up_wk3_tbl_combine    <- get_up_table_combine(wk3_combine, "3 weeks")
 up_wk4_tbl_combine    <- get_up_table_combine(wk4_combine, "4 weeks")
 up_early_tbl_combine  <- get_up_table_combine(early_combine, "Early onset")
-up_term_tbl_combine   <- get_up_table_combine(term_combine, "Terminal corrected")
+up_term_tbl_combine   <- get_up_table_combine(term_combine, "Terminal terminal-stage")
 
 down_wk3_tbl_combine   <- get_down_table_combine(wk3_combine, "3 weeks")
 down_wk4_tbl_combine   <- get_down_table_combine(wk4_combine, "4 weeks")
 down_early_tbl_combine <- get_down_table_combine(early_combine, "Early onset")
-down_term_tbl_combine  <- get_down_table_combine(term_combine, "Terminal corrected")
+down_term_tbl_combine  <- get_down_table_combine(term_combine, "Terminal terminal-stage")
 
 up_all_tbl_combine <- bind_rows(
   up_wk3_tbl_combine,
@@ -970,26 +974,26 @@ down_all_tbl_combine <- bind_rows(
   down_term_tbl_combine
 )
 
-write.csv(up_wk3_tbl_combine,    file.path(out_dir, "UP_genes_3weeks_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(up_wk4_tbl_combine,    file.path(out_dir, "UP_genes_4weeks_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(up_early_tbl_combine,  file.path(out_dir, "UP_genes_Early_onset_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(up_term_tbl_combine,   file.path(out_dir, "UP_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv"), row.names = FALSE)
-write.csv(up_all_tbl_combine,    file.path(out_dir, "UP_genes_ALL_4_timepoints_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
+write.csv(up_wk3_tbl_combine,    file.path(out_dir, "UP_genes_3weeks_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(up_wk4_tbl_combine,    file.path(out_dir, "UP_genes_4weeks_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(up_early_tbl_combine,  file.path(out_dir, "UP_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(up_term_tbl_combine,   file.path(out_dir, "UP_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv"), row.names = FALSE)
+write.csv(up_all_tbl_combine,    file.path(out_dir, "UP_genes_ALL_4_timepoints_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
 
-write.csv(down_wk3_tbl_combine,   file.path(out_dir, "DOWN_genes_3weeks_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(down_wk4_tbl_combine,   file.path(out_dir, "DOWN_genes_4weeks_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(down_early_tbl_combine, file.path(out_dir, "DOWN_genes_Early_onset_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(down_term_tbl_combine,  file.path(out_dir, "DOWN_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv"), row.names = FALSE)
-write.csv(down_all_tbl_combine,   file.path(out_dir, "DOWN_genes_ALL_4_timepoints_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
+write.csv(down_wk3_tbl_combine,   file.path(out_dir, "DOWN_genes_3weeks_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(down_wk4_tbl_combine,   file.path(out_dir, "DOWN_genes_4weeks_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(down_early_tbl_combine, file.path(out_dir, "DOWN_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(down_term_tbl_combine,  file.path(out_dir, "DOWN_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv"), row.names = FALSE)
+write.csv(down_all_tbl_combine,   file.path(out_dir, "DOWN_genes_ALL_4_timepoints_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
 
 # 17) Export cleaned final tables used for volcano
-write.csv(wk3_combine,   file.path(out_dir, "CLEANED_3weeks_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(wk4_combine,   file.path(out_dir, "CLEANED_4weeks_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(early_combine, file.path(out_dir, "CLEANED_Early_onset_CORRECTED_COMBINE_terminal.csv"), row.names = FALSE)
-write.csv(term_combine,  file.path(out_dir, "CLEANED_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv"), row.names = FALSE)
+write.csv(wk3_combine,   file.path(out_dir, "CLEANED_3weeks_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(wk4_combine,   file.path(out_dir, "CLEANED_4weeks_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(early_combine, file.path(out_dir, "CLEANED_Early_onset_LSD1_TIMECOURSE_terminal.csv"), row.names = FALSE)
+write.csv(term_combine,  file.path(out_dir, "CLEANED_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv"), row.names = FALSE)
 
 summary_df <- data.frame(
-  Timepoint = c("3 weeks", "4 weeks", "Early onset", "Terminal corrected"),
+  Timepoint = c("3 weeks", "4 weeks", "Early onset", "Terminal terminal-stage"),
   Model = c(
     unique(wk3_combine$Model),
     unique(wk4_combine$Model),
@@ -1012,22 +1016,22 @@ summary_df <- data.frame(
 
 write.csv(
   summary_df,
-  file.path(out_dir, "SUMMARY_CORRECTED_volcano_DESeq2_UP_DOWN_counts.csv"),
+  file.path(out_dir, "SUMMARY_LSD1_timecourse_volcano_DESeq2_UP_DOWN_counts.csv"),
   row.names = FALSE
 )
 
-cat("\n[CORRECTED COMBINE TERMINAL] Exported UP-regulated genes:\n")
+cat("\n[LSD1 TIME-COURSE TERMINAL INTEGRATION] Exported UP-regulated genes:\n")
 cat("3 weeks:", nrow(up_wk3_tbl_combine), "\n")
 cat("4 weeks:", nrow(up_wk4_tbl_combine), "\n")
 cat("Early onset:", nrow(up_early_tbl_combine), "\n")
-cat("Terminal corrected:", nrow(up_term_tbl_combine), "\n")
+cat("Terminal terminal-stage:", nrow(up_term_tbl_combine), "\n")
 cat("All combined:", nrow(up_all_tbl_combine), "\n")
 
-cat("\n[CORRECTED COMBINE TERMINAL] Exported DOWN-regulated genes:\n")
+cat("\n[LSD1 TIME-COURSE TERMINAL INTEGRATION] Exported DOWN-regulated genes:\n")
 cat("3 weeks:", nrow(down_wk3_tbl_combine), "\n")
 cat("4 weeks:", nrow(down_wk4_tbl_combine), "\n")
 cat("Early onset:", nrow(down_early_tbl_combine), "\n")
-cat("Terminal corrected:", nrow(down_term_tbl_combine), "\n")
+cat("Terminal terminal-stage:", nrow(down_term_tbl_combine), "\n")
 cat("All combined:", nrow(down_all_tbl_combine), "\n")
 
-message("Done. Wrote corrected volcano PDF, DE tables, UP gene tables, DOWN gene tables, and check files.")
+message("Done. Wrote terminal-stage volcano PDF, DE tables, UP gene tables, DOWN gene tables, and check files.")

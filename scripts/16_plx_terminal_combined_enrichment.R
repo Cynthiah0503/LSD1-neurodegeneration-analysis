@@ -1,4 +1,4 @@
-# 10_plx_terminal_combined_enrichment.R
+# 16_plx_terminal_combined_enrichment.R
 #
 # Purpose: PLX terminal combined-sex enrichment analysis for UP/DOWN gene lists.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
@@ -44,6 +44,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "plx_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(clusterProfiler)
   library(org.Mm.eg.db)
@@ -66,7 +70,7 @@ arrange <- dplyr::arrange
 # 0.5) Real folders
 katz_root <- repo_root
 
-project_dir <- file.path(katz_root, "PLX terminal experiment")
+project_dir <- data_processed_dir
 
 base_dir <- file.path(
   project_dir,
@@ -84,10 +88,10 @@ if (!dir.exists(base_dir)) {
 }
 
 # Support files.
-# Cell_marker_Mouse.xlsx exists in timepoint_lsd1 and is also duplicated in Trem2 terminal experiment.
+# CellMarker annotations are read from data/external when available.
 cellmarker_candidates <- c(
-  file.path(katz_root, "timepoint_lsd1", "Cell_marker_Mouse.xlsx"),
-  file.path(katz_root, "Trem2 terminal experiment", "Cell_marker_Mouse.xlsx"),
+  file.path(data_external_dir, "Cell_marker_Mouse.xlsx"),
+  file.path(data_external_dir, "Cell_marker_Mouse.xlsx"),
   file.path(project_dir, "Cell_marker_Mouse.xlsx")
 )
 

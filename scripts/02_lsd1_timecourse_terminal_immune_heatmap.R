@@ -1,6 +1,6 @@
-# 13_lsd1_timecourse_corrected_terminal_immune_heatmap_no_michael.R
+# 02_lsd1_timecourse_terminal_immune_heatmap.R
 #
-# Purpose: Corrected LSD1 time-course immune heatmap excluding Michael terminal samples.
+# Purpose: LSD1 time-course immune heatmap using integrated terminal-stage datasets.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
 # Outputs are written under results/ or script-defined subfolders.
 
@@ -14,6 +14,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "lsd1_timecourse")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(ComplexHeatmap)
   library(dplyr)
@@ -27,12 +31,12 @@ suppressPackageStartupMessages({
 
 katz_dir <- repo_root
 
-lsd1_dir  <- file.path(katz_dir, "timepoint_lsd1")
-trem2_dir <- file.path(katz_dir, "Trem2 terminal experiment")
+lsd1_dir <- data_processed_dir
+trem2_dir <- data_processed_dir
 
 wm_out_dir <- file.path(
   lsd1_dir,
-  "combine terminal_CORRECTED_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_no_Michael"
+  "combine terminal_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_terminal_integrated"
 )
 if (!dir.exists(wm_out_dir)) dir.create(wm_out_dir, recursive = TRUE)
 
@@ -55,8 +59,8 @@ trem2_heatmap_file <- file.path(
   "Trem2heatmap feature counts.xlsx"
 )
 
-# Hard safety block: never use Michael in this corrected workflow.
-michael_file_that_must_not_be_used <- file.path(lsd1_dir, "featurecountsLSD1del vs. LSD1wt .xlsx")
+# Hard safety block: use only the terminal-stage inputs in this workflow.
+excluded_terminal_batch_file <- file.path(lsd1_dir, "featurecountsLSD1del vs. LSD1wt .xlsx")
 
 required_files <- c(
   wk3_file,
@@ -73,8 +77,8 @@ if (length(missing_files) > 0) {
   stop("Missing required input files:\n", paste(missing_files, collapse = "\n"))
 }
 
-if (file.exists(michael_file_that_must_not_be_used)) {
-  message("Michael file exists on disk but will NOT be read: ", michael_file_that_must_not_be_used)
+if (file.exists(excluded_terminal_batch_file)) {
+  message("Legacy terminal-batch file exists on disk but will not be read: ", excluded_terminal_batch_file)
 }
 
 cat("Output folder:\n", wm_out_dir, "\n\n")
@@ -353,7 +357,7 @@ wm_prep_trem2wt_terminal_addon <- function(df) {
     row.names = FALSE
   )
 
-  # Corrected target:
+  # LSD1 time-course target:
   #   keep the Trem2WT background, BOTH LSD1WT and LSD1KO.
   #   internal Trem2WW = display Trem2WT.
   target_groups <- c("LSD1WT_Trem2WW", "LSD1KO_Trem2WW")
@@ -522,7 +526,7 @@ colnames(wm_early_mat)      <- paste0("early__", colnames(wm_early_mat))
 colnames(wm_term_mat)       <- paste0("term_lsd1__", colnames(wm_term_mat))
 colnames(wm_trem2_term_mat) <- paste0("term_trem2wt__", colnames(wm_trem2_term_mat))
 
-# Final safety check: no Michael samples.
+# Final safety check: terminal-stage samples.
 all_raw_sample_names <- c(
   colnames(wm_wk3_mat),
   colnames(wm_wk4_mat),
@@ -531,8 +535,8 @@ all_raw_sample_names <- c(
   colnames(wm_trem2_term_mat)
 )
 
-if (any(grepl("mich|michael", all_raw_sample_names, ignore.case = TRUE))) {
-  stop("Michael/Mich sample detected. Stopping because this corrected workflow must exclude Michael.")
+if (any(grepl("legacy_terminal", all_raw_sample_names, ignore.case = TRUE))) {
+  stop("Legacy terminal-dataset sample detected. Stopping because this workflow uses the terminal-stage integration.")
 }
 
 # 15) Build GLOBAL matrix
@@ -559,8 +563,8 @@ wm_combined_counts <- cbind(
   wm_trem2_term_full
 )
 
-if (any(grepl("mich|michael", colnames(wm_combined_counts), ignore.case = TRUE))) {
-  stop("Michael/Mich sample detected after combining. Stopping.")
+if (any(grepl("legacy_terminal", colnames(wm_combined_counts), ignore.case = TRUE))) {
+  stop("legacy terminal-batch sample detected after combining. Stopping.")
 }
 
 # 15.5) Sample information for QC and plotting
@@ -601,7 +605,7 @@ if (any(is.na(wm_sample_info$Genotype))) {
 
 rownames(wm_sample_info) <- wm_sample_info$Sample
 
-write.csv(wm_sample_info, file.path(wm_out_dir, "CHECK_corrected_sample_info_NO_MICHAEL.csv"), row.names = FALSE)
+write.csv(wm_sample_info, file.path(wm_out_dir, "CHECK_terminal-stage_sample_info_TERMINAL_INTEGRATED.csv"), row.names = FALSE)
 
 wm_dataset_colors <- c(
   "3 weeks" = "#1b9e77",
@@ -680,7 +684,7 @@ wm_p_pca_dataset_combat <- ggplot(
   geom_point(size = 4) +
   geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
   labs(
-    title = "AFTER ComBat: PCA of immune genes (NO Michael; Terminal = LSD1 terminal + Trem2WT_LSD1WT/LSD1KO)",
+    title = "AFTER ComBat: PCA of immune genes (terminal-stage; Terminal = LSD1 terminal + Trem2WT_LSD1WT/LSD1KO)",
     x = paste0("PC1 (", round(wm_percent_var_combat[1], 1), "%)"),
     y = paste0("PC2 (", round(wm_percent_var_combat[2], 1), "%)")
   ) +
@@ -693,7 +697,7 @@ wm_p_pca_genotype_combat <- ggplot(
   geom_point(size = 4) +
   geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
   labs(
-    title = "AFTER ComBat: PCA colored by genotype (NO Michael)",
+    title = "AFTER ComBat: PCA colored by genotype (terminal-stage)",
     x = paste0("PC1 (", round(wm_percent_var_combat[1], 1), "%)"),
     y = paste0("PC2 (", round(wm_percent_var_combat[2], 1), "%)")
   ) +
@@ -720,7 +724,7 @@ wm_ht_cor_combat <- Heatmap(
   cluster_columns = TRUE,
   row_labels = wm_sample_info[rownames(wm_sample_cor_combat), "DisplayName"],
   column_labels = wm_sample_info[colnames(wm_sample_cor_combat), "DisplayName"],
-  column_title = "AFTER ComBat: sample correlation heatmap (immune genes; NO Michael)"
+  column_title = "AFTER ComBat: sample correlation heatmap (immune genes; terminal-stage)"
 )
 
 wm_sample_dist_combat <- dist(t(wm_qc_combat))
@@ -734,11 +738,11 @@ wm_ht_dist_combat <- Heatmap(
   cluster_columns = TRUE,
   row_labels = wm_sample_info[rownames(wm_sample_dist_mat_combat), "DisplayName"],
   column_labels = wm_sample_info[colnames(wm_sample_dist_mat_combat), "DisplayName"],
-  column_title = "AFTER ComBat: sample distance heatmap (immune genes; NO Michael)"
+  column_title = "AFTER ComBat: sample distance heatmap (immune genes; terminal-stage)"
 )
 
 pdf(
-  file.path(wm_out_dir, "CORRECTED_COMBINE_terminal_QC_PCA_and_sample_clustering_immune_genes_AFTER_ComBat_NO_MICHAEL.pdf"),
+  file.path(wm_out_dir, "LSD1_TIMECOURSE_terminal_QC_PCA_and_sample_clustering_immune_genes_AFTER_ComBat_TERMINAL_INTEGRATED.pdf"),
   width = 15,
   height = 12
 )
@@ -782,7 +786,7 @@ wm_p_before_dataset <- ggplot(wm_pca_before_df, aes(x = PC1, y = PC2, color = Da
   geom_point(size = 4) +
   geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
   labs(
-    title = "BEFORE ComBat: PCA of immune genes (NO Michael)",
+    title = "BEFORE ComBat: PCA of immune genes (terminal-stage)",
     x = paste0("PC1 (", round(wm_percent_var_before[1], 1), "%)"),
     y = paste0("PC2 (", round(wm_percent_var_before[2], 1), "%)")
   ) +
@@ -792,7 +796,7 @@ wm_p_before_genotype <- ggplot(wm_pca_before_df, aes(x = PC1, y = PC2, color = G
   geom_point(size = 4) +
   geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
   labs(
-    title = "BEFORE ComBat: PCA colored by genotype (NO Michael)",
+    title = "BEFORE ComBat: PCA colored by genotype (terminal-stage)",
     x = paste0("PC1 (", round(wm_percent_var_before[1], 1), "%)"),
     y = paste0("PC2 (", round(wm_percent_var_before[2], 1), "%)")
   ) +
@@ -809,7 +813,7 @@ wm_p_after_dataset <- ggplot(wm_pca_after_df, aes(x = PC1, y = PC2, color = Data
   geom_point(size = 4) +
   geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
   labs(
-    title = "AFTER ComBat: PCA of immune genes (NO Michael)",
+    title = "AFTER ComBat: PCA of immune genes (terminal-stage)",
     x = paste0("PC1 (", round(wm_percent_var_after[1], 1), "%)"),
     y = paste0("PC2 (", round(wm_percent_var_after[2], 1), "%)")
   ) +
@@ -819,14 +823,14 @@ wm_p_after_genotype <- ggplot(wm_pca_after_df, aes(x = PC1, y = PC2, color = Gen
   geom_point(size = 4) +
   geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
   labs(
-    title = "AFTER ComBat: PCA colored by genotype (NO Michael)",
+    title = "AFTER ComBat: PCA colored by genotype (terminal-stage)",
     x = paste0("PC1 (", round(wm_percent_var_after[1], 1), "%)"),
     y = paste0("PC2 (", round(wm_percent_var_after[2], 1), "%)")
   ) +
   theme_bw(base_size = 14)
 
 pdf(
-  file.path(wm_out_dir, "CORRECTED_COMBINE_terminal_PCA_before_vs_after_ComBat_immune_genes_NO_MICHAEL.pdf"),
+  file.path(wm_out_dir, "LSD1_TIMECOURSE_terminal_PCA_before_vs_after_ComBat_immune_genes_TERMINAL_INTEGRATED.pdf"),
   width = 10,
   height = 8
 )
@@ -847,7 +851,7 @@ if (nrow(wm_combined_immune_z) == 1) {
 
 write.csv(
   data.frame(Gene = wm_global_immune_row_order, RowIndex = seq_along(wm_global_immune_row_order)),
-  file.path(wm_out_dir, "CHECK_global_immune_gene_order_CORRECTED_NO_MICHAEL.csv"),
+  file.path(wm_out_dir, "CHECK_global_immune_gene_order_TERMINAL_INTEGRATED.csv"),
   row.names = FALSE
 )
 
@@ -899,7 +903,7 @@ wm_module_display_name <- function(x) {
 
 wm_out_pdf <- file.path(
   wm_out_dir,
-  "CORRECTED_COMBINE_terminal_Aligned_Timepoints_Immune_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_GLOBAL_withGroupMean_NO_MICHAEL.pdf"
+  "LSD1_TIMECOURSE_terminal_Aligned_Timepoints_Immune_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_GLOBAL_withGroupMean_TERMINAL_INTEGRATED.pdf"
 )
 
 pdf(wm_out_pdf, width = 24, height = 8)
@@ -1002,7 +1006,7 @@ for (wm_m in wm_target_modules) {
     show_column_dend = FALSE,
     top_annotation = wm_hat,
     show_row_names = FALSE,
-    column_title = paste0("Terminal = LSD1 terminal + Trem2WT_LSD1WT/LSD1KO; NO Michael - ", wm_m_display)
+    column_title = paste0("Terminal-stage integration: LSD1 terminal + Trem2WT_LSD1WT/LSD1KO - ", wm_m_display)
   )
 
   draw(
@@ -1067,7 +1071,7 @@ for (wm_m in wm_target_modules) {
     show_column_dend = FALSE,
     top_annotation = wm_hat_g,
     show_row_names = FALSE,
-    column_title = paste0("Terminal = LSD1 terminal + Trem2WT_LSD1WT/LSD1KO; NO Michael - ", wm_m_display)
+    column_title = paste0("Terminal-stage integration: LSD1 terminal + Trem2WT_LSD1WT/LSD1KO - ", wm_m_display)
   )
 
   draw(
@@ -1083,4 +1087,4 @@ dev.off()
 
 cat("Saved main heatmap PDF:\n", wm_out_pdf, "\n")
 cat("Saved QC/sample-check files in:\n", wm_out_dir, "\n")
-cat("DONE. Corrected terminal = LSD1 terminal + Trem2WT_LSD1WT and Trem2WT_LSD1KO terminal add-on samples. Michael was not imported.\n")
+cat("DONE. LSD1 time-course terminal = LSD1 terminal + Trem2WT_LSD1WT and Trem2WT_LSD1KO terminal add-on samples. only the terminal-stage inputs were imported.\n")

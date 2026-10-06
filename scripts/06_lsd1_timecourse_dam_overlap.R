@@ -1,28 +1,28 @@
-# 16_lsd1_timecourse_dam_overlap_no_michael.R
+# 06_lsd1_timecourse_dam_overlap.R
 #
-# Purpose: Corrected overlap analysis between LSD1 time-course gene lists and DAM-associated genes.
+# Purpose: LSD1 time-course overlap analysis between LSD1 time-course gene lists and DAM-associated genes.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
 # Outputs are written under results/ or script-defined subfolders.
 
-# CORRECTED ALL-timepoint DAM overlap Venn
+# LSD1 all-timepoint DAM overlap Venn
 #
 # FIXED:
-#   The corrected volcano output uses these file names:
-#     UP_genes_3weeks_CORRECTED_COMBINE_terminal.csv
-#     DOWN_genes_3weeks_CORRECTED_COMBINE_terminal.csv
-#     UP_genes_4weeks_CORRECTED_COMBINE_terminal.csv
-#     DOWN_genes_4weeks_CORRECTED_COMBINE_terminal.csv
-#     UP_genes_Early_onset_CORRECTED_COMBINE_terminal.csv
-#     DOWN_genes_Early_onset_CORRECTED_COMBINE_terminal.csv
-#     UP_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv
-#     DOWN_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv
+#   The terminal-stage volcano output uses these file names:
+#     UP_genes_3weeks_LSD1_TIMECOURSE_terminal.csv
+#     DOWN_genes_3weeks_LSD1_TIMECOURSE_terminal.csv
+#     UP_genes_4weeks_LSD1_TIMECOURSE_terminal.csv
+#     DOWN_genes_4weeks_LSD1_TIMECOURSE_terminal.csv
+#     UP_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv
+#     DOWN_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv
+#     UP_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv
+#     DOWN_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv
 #
 # Goal:
-#   Compare ALL corrected volcano UP/DOWN gene lists against DAM gene lists:
+#   Compare ALL terminal-stage volcano UP/DOWN gene lists against DAM gene lists:
 #     3 weeks UP/DOWN vs DAM
 #     4 weeks UP/DOWN vs DAM
 #     Early onset UP/DOWN vs DAM
-#     Terminal corrected UP/DOWN vs DAM
+#     Terminal terminal-stage UP/DOWN vs DAM
 #
 # Output:
 #   One multi-page Venn PDF + summary CSV + overlap gene CSV + TREM2 check
@@ -38,6 +38,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "lsd1_timecourse")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(readr)
   library(readxl)
@@ -51,41 +55,38 @@ suppressPackageStartupMessages({
 })
 
 katz_root <- repo_root
-project_dir <- file.path(katz_root, "timepoint_lsd1")
-corrected_root <- file.path(project_dir, "正确combine terminal")
+project_dir <- data_processed_dir
+terminal_stage_root <- results_dir
 
-base_dir <- file.path(
-  corrected_root,
-  "CORRECTED_volcano_LSD1terminal_plus_Trem2WTterminal_no_Michael_GALAXY_style_FC"
-)
+base_dir <- file.path(results_dir, "terminal_volcano")
 
-dam_file <- file.path(corrected_root, "DAM.xlsx")
+dam_file <- file.path(terminal_stage_root, "DAM.xlsx")
 
 out_dir <- file.path(
   base_dir,
-  "DAM_overlap_ALL_timepoints_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL"
+  "DAM_overlap_ALL_timepoints_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED"
 )
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-venn_pdf <- file.path(out_dir, "VENN_ALL_timepoints_UP_DOWN_vs_DAM_CORRECTED_NO_MICHAEL.pdf")
-summary_csv <- file.path(out_dir, "SUMMARY_ALL_timepoints_UP_DOWN_vs_DAM_CORRECTED_NO_MICHAEL.csv")
-overlap_csv <- file.path(out_dir, "OVERLAP_GENES_ALL_timepoints_UP_DOWN_vs_DAM_CORRECTED_NO_MICHAEL.csv")
-trem2_check_csv <- file.path(out_dir, "TREM2_presence_check_ALL_timepoints_vs_DAM_CORRECTED_NO_MICHAEL.csv")
-input_check_csv <- file.path(out_dir, "CHECK_input_files_CORRECTED_DAM_overlap_ALL_timepoints.csv")
-heatmap_pdf <- file.path(out_dir, "HEATMAP_overlap_counts_ALL_timepoints_UP_DOWN_vs_DAM_CORRECTED_NO_MICHAEL.pdf")
+venn_pdf <- file.path(out_dir, "VENN_ALL_timepoints_UP_DOWN_vs_DAM_TERMINAL_INTEGRATED.pdf")
+summary_csv <- file.path(out_dir, "SUMMARY_ALL_timepoints_UP_DOWN_vs_DAM_TERMINAL_INTEGRATED.csv")
+overlap_csv <- file.path(out_dir, "OVERLAP_GENES_ALL_timepoints_UP_DOWN_vs_DAM_TERMINAL_INTEGRATED.csv")
+trem2_check_csv <- file.path(out_dir, "TREM2_presence_check_ALL_timepoints_vs_DAM_TERMINAL_INTEGRATED.csv")
+input_check_csv <- file.path(out_dir, "CHECK_input_files_TERMINAL_INTEGRATED_DAM_overlap_ALL_timepoints.csv")
+heatmap_pdf <- file.path(out_dir, "HEATMAP_overlap_counts_ALL_timepoints_UP_DOWN_vs_DAM_TERMINAL_INTEGRATED.pdf")
 
-# 2. Corrected volcano UP/DOWN files
+# 2. LSD1 time-course volcano UP/DOWN files
 
 timepoint_files <- tribble(
   ~Timepoint,     ~Direction, ~List_name,          ~File,
-  "3 weeks",     "UP",      "UP_3weeks",        file.path(base_dir, "UP_genes_3weeks_CORRECTED_COMBINE_terminal.csv"),
-  "3 weeks",     "DOWN",    "DOWN_3weeks",      file.path(base_dir, "DOWN_genes_3weeks_CORRECTED_COMBINE_terminal.csv"),
-  "4 weeks",     "UP",      "UP_4weeks",        file.path(base_dir, "UP_genes_4weeks_CORRECTED_COMBINE_terminal.csv"),
-  "4 weeks",     "DOWN",    "DOWN_4weeks",      file.path(base_dir, "DOWN_genes_4weeks_CORRECTED_COMBINE_terminal.csv"),
-  "Early onset", "UP",      "UP_Early_onset",   file.path(base_dir, "UP_genes_Early_onset_CORRECTED_COMBINE_terminal.csv"),
-  "Early onset", "DOWN",    "DOWN_Early_onset", file.path(base_dir, "DOWN_genes_Early_onset_CORRECTED_COMBINE_terminal.csv"),
-  "Terminal",    "UP",      "UP_Terminal",      file.path(base_dir, "UP_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv"),
-  "Terminal",    "DOWN",    "DOWN_Terminal",    file.path(base_dir, "DOWN_genes_Terminal_CORRECTED_LSD1terminal_plus_Trem2WTterminal_NO_MICHAEL.csv")
+  "3 weeks",     "UP",      "UP_3weeks",        file.path(base_dir, "UP_genes_3weeks_LSD1_TIMECOURSE_terminal.csv"),
+  "3 weeks",     "DOWN",    "DOWN_3weeks",      file.path(base_dir, "DOWN_genes_3weeks_LSD1_TIMECOURSE_terminal.csv"),
+  "4 weeks",     "UP",      "UP_4weeks",        file.path(base_dir, "UP_genes_4weeks_LSD1_TIMECOURSE_terminal.csv"),
+  "4 weeks",     "DOWN",    "DOWN_4weeks",      file.path(base_dir, "DOWN_genes_4weeks_LSD1_TIMECOURSE_terminal.csv"),
+  "Early onset", "UP",      "UP_Early_onset",   file.path(base_dir, "UP_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv"),
+  "Early onset", "DOWN",    "DOWN_Early_onset", file.path(base_dir, "DOWN_genes_Early_onset_LSD1_TIMECOURSE_terminal.csv"),
+  "Terminal",    "UP",      "UP_Terminal",      file.path(base_dir, "UP_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv"),
+  "Terminal",    "DOWN",    "DOWN_Terminal",    file.path(base_dir, "DOWN_genes_Terminal_LSD1terminal_plus_Trem2WTterminal_TERMINAL_INTEGRATED.csv")
 )
 
 input_check <- bind_rows(
@@ -96,7 +97,7 @@ input_check <- bind_rows(
   ),
   timepoint_files %>%
     transmute(
-      input_name = paste(List_name, "corrected"),
+      input_name = paste(List_name, "terminal-stage"),
       path = File,
       exists = file.exists(File)
     )
@@ -108,7 +109,7 @@ cat("\nInput file check:\n")
 print(input_check)
 
 if (!dir.exists(base_dir)) {
-  stop("Corrected volcano output folder does not exist:\n", base_dir)
+  stop("LSD1 time-course volcano output folder does not exist:\n", base_dir)
 }
 if (!file.exists(dam_file)) {
   stop("DAM.xlsx not found:\n", dam_file)
@@ -119,7 +120,7 @@ if (length(missing_timepoint_files) > 0) {
   cat("\nFiles available in base_dir:\n")
   print(list.files(base_dir, pattern = "genes_.*\\.csv$", full.names = FALSE))
   stop(
-    "Missing corrected UP/DOWN gene files:\n",
+    "Missing terminal-stage UP/DOWN gene files:\n",
     paste(missing_timepoint_files, collapse = "\n"),
     "\n\nI printed available gene-list CSV files above. Check file names in:\n",
     base_dir
@@ -127,10 +128,10 @@ if (length(missing_timepoint_files) > 0) {
 }
 
 # Safety check:
-# Allow NO_MICHAEL in corrected file names.
-# Stop only for old explicit Michael or old batch-aware folder strings.
+# Allow TERMINAL_INTEGRATED in terminal-stage file names.
+# Stop only for old explicit legacy terminal dataset or old batch-aware folder strings.
 forbidden_patterns <- c(
-  "Terminal_plus_Michael",
+  "Terminal_plus_legacy_terminal_dataset",
   "featurecountsLSD1del",
   "featurecountsLSD1del vs",
   "combine terminal batch aware",
@@ -143,7 +144,7 @@ bad_hit <- unlist(lapply(forbidden_patterns, function(pat) {
 }))
 
 if (any(bad_hit)) {
-  stop("A forbidden old/Michael/batch-aware path appears in the corrected DAM workflow.")
+  stop("A forbidden old/legacy terminal-batch-aware path appears in the DAM overlap workflow.")
 }
 
 clean_gene_vector <- function(x) {
@@ -208,10 +209,10 @@ timepoint_size_check <- timepoint_files %>%
 
 write_csv(
   timepoint_size_check,
-  file.path(out_dir, "CHECK_corrected_timepoint_gene_list_sizes.csv")
+  file.path(out_dir, "CHECK_terminal-stage_timepoint_gene_list_sizes.csv")
 )
 
-cat("\nCorrected timepoint gene list check:\n")
+cat("\nLSD1 time-course timepoint gene list check:\n")
 print(timepoint_size_check)
 
 # Handles:
@@ -444,9 +445,9 @@ p_heat <- ggplot(summary_plot_df, aes(x = DAM_list, y = Plot_row, fill = overlap
   geom_text(aes(label = overlap_n), size = 3) +
   scale_fill_gradient(low = "white", high = "firebrick", name = "Overlap n") +
   labs(
-    title = "Corrected LSD1 timepoint UP/DOWN gene overlap with DAM lists",
+    title = "LSD1 time-course LSD1 timepoint UP/DOWN gene overlap with DAM lists",
     x = "DAM gene list",
-    y = "Corrected LSD1 timepoint list"
+    y = "LSD1 time-course LSD1 timepoint list"
   ) +
   theme_bw(base_size = 11) +
   theme(

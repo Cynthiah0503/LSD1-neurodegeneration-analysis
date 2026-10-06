@@ -1,4 +1,4 @@
-# 01_trem2_terminal_volcano_overlay.R
+# 07_trem2_terminal_volcano_overlay.R
 #
 # Purpose: Trem2/LSD1 terminal differential-expression volcano plots with immune-module overlay.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
@@ -14,6 +14,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "trem2_terminal")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
@@ -33,19 +37,19 @@ legend_no_title <- list(
   theme(legend.title = element_blank())
 )
 
-# 读入 4 个 CLEANED 文件
-f1 <- read.csv("CLEANED_Trem2_WT; LSD1_Del vs. Trem2_WT; LSD1_WT.csv", header = TRUE)
-f2 <- read.csv("CLEANED_Trem2KO; LDS1_Del vs. Trem2_WT; LSD1_Del.csv", header = TRUE)
-f3 <- read.csv("CLEANED_Trem2KO; LDS1_Del vs. Trem2_WT; LSD1_WT.csv", header = TRUE)
-f4 <- read.csv("CLEANED_Trem2KO; LSD1_WT vs. Trem2_WT; LSD1_WT.csv", header = TRUE)
+# Load cleaned differential-expression tables.
+f1 <- read.csv(file.path(data_processed_dir, "CLEANED_Trem2_WT; LSD1_Del vs. Trem2_WT; LSD1_WT.csv"), header = TRUE)
+f2 <- read.csv(file.path(data_processed_dir, "CLEANED_Trem2KO; LDS1_Del vs. Trem2_WT; LSD1_Del.csv"), header = TRUE)
+f3 <- read.csv(file.path(data_processed_dir, "CLEANED_Trem2KO; LDS1_Del vs. Trem2_WT; LSD1_WT.csv"), header = TRUE)
+f4 <- read.csv(file.path(data_processed_dir, "CLEANED_Trem2KO; LSD1_WT vs. Trem2_WT; LSD1_WT.csv"), header = TRUE)
 
-# 图标题
+# Define comparison titles.
 title_f1 <- "Trem2WT_LSD1KO_vs_Trem2WT_LSD1WT"
 title_f2 <- "Trem2KO_LSD1KO_vs_Trem2WT_LSD1KO"
 title_f3 <- "Trem2KO_LSD1KO_vs_Trem2WT_LSD1WT"
 title_f4 <- "Trem2KO_LSD1WT_vs_Trem2WT_LSD1WT"
 
-# 统一顺序（从左到右）
+# Set the left-to-right plot order.
 # f1, f4, f3, f2
 
 # 1) Trem2WT_LSD1KO vs Trem2WT_LSD1WT
@@ -216,7 +220,7 @@ p_f4 <- ggplot(f4, aes(x = log2.FC., y = -log10(P.adj), color = Significance)) +
   theme_minimal(base_size = 14) +
   legend_no_title
 
-# 第1页：whole genome gene expression changes
+# Page 1: genome-wide gene expression changes.
 # 1×4 + 一个 legend
 # 左到右顺序：
 # f1, f4, f3, f2
@@ -236,8 +240,8 @@ combined_4 <- (p_f1 | p_f4 | p_f3 | p_f2) +
 
 # Gold / Forestgreen module gene sets
 
-allc <- read.csv("NIHMS472534-supplement-02.csv", header = TRUE, check.names = FALSE)
-mod  <- read.csv("modules.csv", header = TRUE, check.names = FALSE)
+allc <- read.csv(file.path(data_external_dir, "NIHMS472534-supplement-02.csv"), header = TRUE, check.names = FALSE)
+mod  <- read.csv(file.path(data_external_dir, "modules.csv"), header = TRUE, check.names = FALSE)
 
 names(mod) <- sub("^\\ufeff", "", names(mod))
 bad <- is.na(names(mod)) | names(mod) == ""
@@ -277,7 +281,7 @@ if (length(forestgreen_set) == 0) stop("Forestgreen module gene set is empty aft
 cat("Gold module genes found in volcano tables:", length(gold_set), "\\n")
 cat("Forestgreen module genes found in volcano tables:", length(forestgreen_set), "\\n")
 
-# 第2页：gold + forestgreen overlay
+# Page 2: immune-module overlay.
 
 make_volcano_with_gold_forestgreen <- function(df, top_n = 15, plot_title, xlab_text, subtitle_text = NULL,
                                                gold_genes = NULL,
@@ -409,7 +413,7 @@ combined_gold_forestgreen_overlay <- (p_gf1 | p_gf4 | p_gf3 | p_gf2) +
 
 graphics.off()
 
-pdf("Trem2_LSD1_VOLCANO_wholeGenome_gold_forestgreen_overlay.pdf", width = 28, height = 8, onefile = TRUE)
+pdf(file.path(results_dir, "trem2_terminal_volcano_overlay.pdf"), width = 28, height = 8, onefile = TRUE)
 
 print(combined_4)
 print(combined_gold_forestgreen_overlay)
@@ -417,7 +421,7 @@ print(combined_gold_forestgreen_overlay)
 dev.off()
 
 # Export DOWN genes
-# 原版逻辑不变
+# Export significant DOWN-regulated gene lists for downstream enrichment.
 get_down_table <- function(df, comparison_name) {
   df %>%
     filter(P.adj < 0.05, log2.FC. < -1) %>%
@@ -430,10 +434,10 @@ down_f2 <- get_down_table(f2, "Trem2KO_LSD1KO_vs_Trem2WT_LSD1KO")
 down_f3 <- get_down_table(f3, "Trem2KO_LSD1KO_vs_Trem2WT_LSD1WT")
 down_f4 <- get_down_table(f4, "Trem2KO_LSD1WT_vs_Trem2WT_LSD1WT")
 
-write.csv(down_f1, "DOWN_genes_Trem2WT_LSD1KO_vs_Trem2WT_LSD1WT.csv", row.names = FALSE)
-write.csv(down_f2, "DOWN_genes_Trem2KO_LSD1KO_vs_Trem2WT_LSD1KO.csv", row.names = FALSE)
-write.csv(down_f3, "DOWN_genes_Trem2KO_LSD1KO_vs_Trem2WT_LSD1WT.csv", row.names = FALSE)
-write.csv(down_f4, "DOWN_genes_Trem2KO_LSD1WT_vs_Trem2WT_LSD1WT.csv", row.names = FALSE)
+write.csv(down_f1, file.path(results_dir, "DOWN_genes_Trem2WT_LSD1KO_vs_Trem2WT_LSD1WT.csv"), row.names = FALSE)
+write.csv(down_f2, file.path(results_dir, "DOWN_genes_Trem2KO_LSD1KO_vs_Trem2WT_LSD1KO.csv"), row.names = FALSE)
+write.csv(down_f3, file.path(results_dir, "DOWN_genes_Trem2KO_LSD1KO_vs_Trem2WT_LSD1WT.csv"), row.names = FALSE)
+write.csv(down_f4, file.path(results_dir, "DOWN_genes_Trem2KO_LSD1WT_vs_Trem2WT_LSD1WT.csv"), row.names = FALSE)
 
 cat("Downregulated genes exported:\\n")
 cat("f1:", nrow(down_f1), "genes\\n")

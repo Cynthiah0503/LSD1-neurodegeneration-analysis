@@ -1,27 +1,27 @@
-# 14_lsd1_timecourse_corrected_terminal_reactive_astrocyte_heatmap_no_michael.R
+# 03_lsd1_timecourse_terminal_reactive_astrocyte_heatmap.R
 #
-# Purpose: Corrected LSD1 time-course reactive-astrocyte heatmap excluding Michael terminal samples.
+# Purpose: LSD1 time-course reactive-astrocyte heatmap using integrated terminal-stage datasets.
 # Inputs are expected under data/processed/ or data/external/ relative to this repository.
 # Outputs are written under results/ or script-defined subfolders.
 
-# CORRECTED COMBINE TERMINAL reactive-astrocyte marker heatmap
+# LSD1 TIME-COURSE TERMINAL INTEGRATION reactive-astrocyte marker heatmap
 #
 # FIXED LOGIC:
-#   3w + 4w + early onset + terminal are still from timepoint_lsd1.
+#   3-week, 4-week, early-onset, and terminal inputs are read from processed count matrices.
 #   Terminal is now:
-#     1) timepoint_lsd1 Terminal feature counts.xlsx
+#     1) Terminal-stage featureCounts matrix
 #     2) Trem2heatmap feature counts.xlsx, Trem2WT background only:
 #          LSD1WT_Trem2WW + LSD1KO_Trem2WW
 #        displayed as Trem2WT_LSD1WT + Trem2WT_LSD1KO.
 #
-#   Michael terminal is completely excluded.
+#   legacy terminal dataset is not used in this terminal-stage integration.
 #
 #   This script intentionally DOES NOT read:
 #     featurecountsLSD1del vs. LSD1wt .xlsx
-#   and it stops if any "mich" / "michael" sample accidentally enters.
+#   and it stops if any "legacy_terminal_batch" / "excluded_terminal_batch" sample accidentally enters.
 #
 # Output:
-#     combine terminal_REACTIVE_ASTRO_CORRECTED_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_no_Michael/
+#     combine terminal_REACTIVE_ASTRO_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_terminal_integrated/
 
 
 # Resolve paths relative to the repository root when the script is run with Rscript.
@@ -34,6 +34,10 @@ get_script_dir <- function() {
   getwd()
 }
 repo_root <- normalizePath(file.path(get_script_dir(), ".."), mustWork = FALSE)
+data_processed_dir <- file.path(repo_root, "data", "processed")
+data_external_dir <- file.path(repo_root, "data", "external")
+results_dir <- file.path(repo_root, "results", "lsd1_timecourse")
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 suppressPackageStartupMessages({
   library(ComplexHeatmap)
   library(dplyr)
@@ -47,12 +51,12 @@ suppressPackageStartupMessages({
 
 katz_dir <- repo_root
 
-lsd1_dir  <- file.path(katz_dir, "timepoint_lsd1")
-trem2_dir <- file.path(katz_dir, "Trem2 terminal experiment")
+lsd1_dir <- data_processed_dir
+trem2_dir <- data_processed_dir
 
 wm_out_dir <- file.path(
   lsd1_dir,
-  "combine terminal_REACTIVE_ASTRO_CORRECTED_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_no_Michael"
+  "combine terminal_REACTIVE_ASTRO_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_terminal_integrated"
 )
 if (!dir.exists(wm_out_dir)) dir.create(wm_out_dir, recursive = TRUE)
 
@@ -63,8 +67,8 @@ term_file  <- file.path(lsd1_dir, "Terminal feature counts.xlsx")
 
 trem2_heatmap_file <- file.path(trem2_dir, "Trem2heatmap feature counts.xlsx")
 
-# Hard safety block: never use Michael in this corrected workflow.
-michael_file_that_must_not_be_used <- file.path(lsd1_dir, "featurecountsLSD1del vs. LSD1wt .xlsx")
+# Hard safety block: use only the terminal-stage inputs in this workflow.
+excluded_terminal_batch_file <- file.path(lsd1_dir, "featurecountsLSD1del vs. LSD1wt .xlsx")
 
 required_files <- c(wk3_file, wk4_file, early_file, term_file, trem2_heatmap_file)
 missing_files <- required_files[!file.exists(required_files)]
@@ -72,8 +76,8 @@ if (length(missing_files) > 0) {
   stop("Missing required input files:\n", paste(missing_files, collapse = "\n"))
 }
 
-if (file.exists(michael_file_that_must_not_be_used)) {
-  message("Michael file exists on disk but will NOT be read: ", michael_file_that_must_not_be_used)
+if (file.exists(excluded_terminal_batch_file)) {
+  message("Legacy terminal-batch file exists on disk but will not be read: ", excluded_terminal_batch_file)
 }
 
 cat("Output folder:\n", wm_out_dir, "\n\n")
@@ -423,8 +427,8 @@ colnames(wm_term_mat)       <- paste0("term_lsd1__", colnames(wm_term_mat))
 colnames(wm_trem2_term_mat) <- paste0("term_trem2wt__", colnames(wm_trem2_term_mat))
 
 all_raw_sample_names <- c(colnames(wm_wk3_mat), colnames(wm_wk4_mat), colnames(wm_early_mat), colnames(wm_term_mat), colnames(wm_trem2_term_mat))
-if (any(grepl("mich|michael", all_raw_sample_names, ignore.case = TRUE))) {
-  stop("Michael/Mich sample detected. Stopping because this corrected workflow must exclude Michael.")
+if (any(grepl("legacy_terminal", all_raw_sample_names, ignore.case = TRUE))) {
+  stop("Legacy terminal-dataset sample detected. Stopping because this workflow uses the terminal-stage integration.")
 }
 
 # 10) Build GLOBAL matrix
@@ -441,8 +445,8 @@ wm_trem2_term_full <- wm_make_full_union_mat(wm_trem2_term_mat, wm_all_genes_uni
 
 wm_combined_counts <- cbind(wm_wk3_full, wm_wk4_full, wm_early_full, wm_term_full, wm_trem2_term_full)
 
-if (any(grepl("mich|michael", colnames(wm_combined_counts), ignore.case = TRUE))) {
-  stop("Michael/Mich sample detected after combining. Stopping.")
+if (any(grepl("legacy_terminal", colnames(wm_combined_counts), ignore.case = TRUE))) {
+  stop("legacy terminal-batch sample detected after combining. Stopping.")
 }
 
 wm_reactive_genes_present <- intersect(rownames(wm_combined_counts), wm_reactive_astro_markers_up)
@@ -484,7 +488,7 @@ if (any(is.na(wm_sample_info$Genotype))) {
 }
 
 rownames(wm_sample_info) <- wm_sample_info$Sample
-write.csv(wm_sample_info, file.path(wm_out_dir, "CHECK_corrected_reactive_astro_sample_info_NO_MICHAEL.csv"), row.names = FALSE)
+write.csv(wm_sample_info, file.path(wm_out_dir, "CHECK_terminal-stage_reactive_astro_sample_info_TERMINAL_INTEGRATED.csv"), row.names = FALSE)
 
 wm_dataset_colors <- c(
   "3 weeks" = "#1b9e77",
@@ -533,7 +537,7 @@ if (nrow(wm_qc_combat) >= 2) {
     geom_point(size = 4) +
     geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
     labs(
-      title = "AFTER ComBat: PCA of reactive astrocyte markers (NO Michael; Terminal = LSD1 terminal + Trem2WT_LSD1WT/LSD1KO)",
+      title = "AFTER ComBat: PCA of reactive astrocyte markers (terminal-stage; Terminal = LSD1 terminal + Trem2WT_LSD1WT/LSD1KO)",
       x = paste0("PC1 (", round(wm_percent_var_combat[1], 1), "%)"),
       y = paste0("PC2 (", round(wm_percent_var_combat[2], 1), "%)")
     ) +
@@ -543,7 +547,7 @@ if (nrow(wm_qc_combat) >= 2) {
     geom_point(size = 4) +
     geom_text(aes(label = DisplayName), vjust = -0.8, size = 3, show.legend = FALSE) +
     labs(
-      title = "AFTER ComBat: PCA colored by genotype (reactive astrocyte markers; NO Michael)",
+      title = "AFTER ComBat: PCA colored by genotype (reactive astrocyte markers; terminal-stage)",
       x = paste0("PC1 (", round(wm_percent_var_combat[1], 1), "%)"),
       y = paste0("PC2 (", round(wm_percent_var_combat[2], 1), "%)")
     ) +
@@ -566,7 +570,7 @@ if (nrow(wm_qc_combat) >= 2) {
     cluster_columns = TRUE,
     row_labels = wm_sample_info[rownames(wm_sample_cor_combat), "DisplayName"],
     column_labels = wm_sample_info[colnames(wm_sample_cor_combat), "DisplayName"],
-    column_title = "AFTER ComBat: sample correlation heatmap (reactive astrocyte markers; NO Michael)"
+    column_title = "AFTER ComBat: sample correlation heatmap (reactive astrocyte markers; terminal-stage)"
   )
 
   wm_sample_dist_combat <- dist(t(wm_qc_combat))
@@ -579,11 +583,11 @@ if (nrow(wm_qc_combat) >= 2) {
     cluster_columns = TRUE,
     row_labels = wm_sample_info[rownames(wm_sample_dist_mat_combat), "DisplayName"],
     column_labels = wm_sample_info[colnames(wm_sample_dist_mat_combat), "DisplayName"],
-    column_title = "AFTER ComBat: sample distance heatmap (reactive astrocyte markers; NO Michael)"
+    column_title = "AFTER ComBat: sample distance heatmap (reactive astrocyte markers; terminal-stage)"
   )
 
   pdf(
-    file.path(wm_out_dir, "CORRECTED_COMBINE_terminal_QC_PCA_and_sample_clustering_reactive_astro_markers_AFTER_ComBat_NO_MICHAEL.pdf"),
+    file.path(wm_out_dir, "LSD1_TIMECOURSE_terminal_QC_PCA_and_sample_clustering_reactive_astro_markers_AFTER_ComBat_TERMINAL_INTEGRATED.pdf"),
     width = 15,
     height = 12
   )
@@ -657,7 +661,7 @@ if (nrow(wm_all_mix) == 1) {
 
 write.csv(
   data.frame(Gene = wm_gene_names_shared, RowIndex = seq_along(wm_gene_names_shared)),
-  file.path(wm_out_dir, "CHECK_reactive_astrocyte_gene_order_CORRECTED_NO_MICHAEL.csv"),
+  file.path(wm_out_dir, "CHECK_reactive_astrocyte_gene_order_TERMINAL_INTEGRATED.csv"),
   row.names = FALSE
 )
 
@@ -808,7 +812,7 @@ wm_htt_g <- Heatmap(
 
 wm_out_pdf <- file.path(
   wm_out_dir,
-  "CORRECTED_COMBINE_terminal_Aligned_Timepoints_ReactiveAstrocytes_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_GLOBAL_withGroupMean_NO_MICHAEL.pdf"
+  "LSD1_TIMECOURSE_terminal_Aligned_Timepoints_ReactiveAstrocytes_LSD1terminal_plus_Trem2WT_LSD1WT_and_LSD1KO_GLOBAL_withGroupMean_TERMINAL_INTEGRATED.pdf"
 )
 
 pdf(wm_out_pdf, width = 24, height = 8)
